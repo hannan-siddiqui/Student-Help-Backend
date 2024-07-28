@@ -1,52 +1,84 @@
-from .models import *
-from .serializers import StudentSerializer
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from .models import Student, Job
+from .serializers import StudentSerializer, JobSerializer
 
 
+
+class JobView(APIView):
+    def get(self, request):
+        jobs = Job.objects.all()
+        job_serializer = JobSerializer(jobs, many=True)
+        return Response(job_serializer.data)
+
+    def post(self, request):
+        serializer = JobSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
 class StudentView(APIView):
-  
     def get(self, request):
-        student = Student.objects.all()
-        studentSerObj = StudentSerializer(student, many=True)
-        return Response(studentSerObj.data)
+        students = Student.objects.all()
+        student_serializer = StudentSerializer(students, many=True)
+        return Response(student_serializer.data)
+
+    def post(self, request):
+        serializer = StudentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    def post(self,request):
-        serializeobj=StudentSerializer(data=request.data)
-        if serializeobj.is_valid():
-            serializeobj.save()
-            return Response(200)
-        return Response(serializeobj.errors)
+
+class JobUpdate(APIView):
+    def put(self, request, pk):
+        try:
+            job = Job.objects.get(pk=pk)
+        except Job.DoesNotExist:
+            return Response({"error": "job not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = JobSerializer(job, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# update datails 
 
 class DetailsUpdate(APIView):
-    def post(self,request,pk):
+    def put(self, request, pk):
         try:
-            detailObj=Student.objects.get(pk=pk)
-        except:
-            return Response("Not Found in Database")
+            student = Student.objects.get(pk=pk)
+        except Student.DoesNotExist:
+            return Response({"error": "Student not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        serializeobj=StudentSerializer(detailObj,data=request.data)
-        if serializeobj.is_valid():
-            serializeobj.save()
-            return Response(200)
-        return Response(serializeobj.errors)
+        serializer = StudentSerializer(student, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-
-
-# dalete datails
+class JobDelete(APIView):
+    def delete(self, request, pk):
+        try:
+            job = Job.objects.get(pk=pk)
+        except Job.DoesNotExist:
+            return Response({"error": "Student not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        job.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class DetailsDelete(APIView):
-    def post(self,pk):
+    def delete(self, request, pk):
         try:
-            detailObj=Student.objects.get(pk=pk)
-        except:
-            return Response("Not Found in Database")
-        detailObj.delete()
-        return Response(200)
-    
+            student = Student.objects.get(pk=pk)
+        except Student.DoesNotExist:
+            return Response({"error": "Student not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        student.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
